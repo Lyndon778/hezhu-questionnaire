@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>禾铸·局部翻新 - 客户需求问卷</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    background: #f0f0f0;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+    background: #fff;
+    min-height: 100vh;
+    position: relative;
+    padding-bottom: 80px;
+  }
+
+  /* === 头部 === */
+  .header {
+    background: linear-gradient(160deg, #04342C 0%, #0a5c4a 100%);
+    color: #fff;
+    padding: 40px 28px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    right: -20px;
+    width: 160px;
+    height: 160px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: -30px;
+    width: 120px;
+    height: 120px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+  }
+  .brand-top {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .brand-name {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  .brand-name span {
+    font-weight: 300;
+    font-size: 18px;
+    margin-left: 2px;
+  }
+  .brand-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 1px;
+  }
+  .header-line {
+    width: 32px;
+    height: 2px;
+    background: rgba(255,255,255,0.25);
+    margin: 20px 0 18px;
+  }
+  .header-desc {
+    font-size: 13px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.7);
+    max-width: 300px;
+  }
+  .header-time {
+    margin-top: 14px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .header-time svg {
+    width: 12px; height: 12px; opacity: 0.6;
+  }
+
+  /* === 问题区 === */
+  .questions {
+    padding: 0 24px;
+    margin-top: 28px;
+  }
+
+  .q-group {
+    margin-bottom: 26px;
+  }
+
+  .q-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+  .q-num {
+    background: #04342C;
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .q-required {
+    color: #e85d4a;
+    font-size: 11px;
+    margin-left: 2px;
+    font-weight: 400;
+  }
+  .q-hint {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 10px;
+    padding-left: 30px;
+  }
+
+  /* === 选项组 === */
+  .options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-left: 30px;
+  }
+
+  .opt {
+    border: 1.5px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13.5px;
+    color: #444;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    background: #fafafa;
+    position: relative;
+    line-height: 1.4;
+  }
+  .opt:active {
+    transform: scale(0.97);
+  }
+  .opt.selected {
+    border-color: #04342C;
+    background: #04342C;
+    color: #fff;
+  }
+  .opt.selected::before {
+    content: '✓';
+    position: absolute;
+    top: -1px;
+    right: 6px;
+    font-size: 10px;
+    color: #fff;
+    background: #0a5c4a;
+    width: 16px;
+    height: 16px;
+    border-radius: 0 8px 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .opt.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* === 文本输入 === */
+  .text-input-wrap {
+    padding-left: 30px;
+  }
+  .text-input {
+    width: 100%;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: #333;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    background: #fafafa;
+  }
+  .text-input:focus {
+    border-color: #04342C;
+    background: #fff;
+  }
+  .text-input::placeholder {
+    color: #bbb;
+  }
+  textarea.text-input {
+    min-height: 80px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  /* === 分割线 === */
+  .divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 4px 24px 26px;
+  }
+
+  /* === 底部提交 === */
+  .submit-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    padding: 14px 24px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+  }
+  .submit-hint {
+    font-size: 11px;
+    color: #999;
+    line-height: 1.4;
+  }
+  .submit-hint b {
+    color: #04342C;
+  }
+  .submit-btn {
+    background: #04342C;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 32px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .submit-btn:active {
+    transform: scale(0.96);
+    background: #0a5c4a;
+  }
+
+  /* === 提交成功 === */
+  .success-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(4,52,44,0.92);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding: 40px;
+    text-align: center;
+  }
+  .success-overlay.show {
+    display: flex;
+  }
+  .success-icon {
+    width: 64px; height: 64px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin-bottom: 24px;
+    animation: popIn 0.4s ease;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .success-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .success-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.7;
+    max-width: 260px;
+  }
+
+  /* === Toast === */
+  .toast {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(0,0,0,0.78);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 头部 -->
+  <div class="header">
+    <div class="brand-top">HEZHU · 局部翻新</div>
+    <div class="brand-name">客户需求<span>问卷</span></div>
+    <div class="brand-sub">精准了解您的翻新需求</div>
+    <div class="header-line"></div>
+    <div class="header-desc">只需 1 分钟，帮助我们为您匹配最适合的翻新方案和报价</div>
+    <div class="header-time">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      预计用时 1 分钟 · 共 8 题
+    </div>
+  </div>
+
+  <form id="questionnaireForm" action="https://formspree.io/f/xaqvyqye" method="POST">
+  <div class="questions">
+
+    <!-- Q1 翻新区域 -->
+    <div class="q-group">
+      <div class="q-label">
+        <span class="q-num">1</span>
+        <span>您需要翻新哪些区域？<span class="q-required">*</span></span>
+      </div>
+      <div class="q-hint">可多选</div>
+      <div class="options" data-name="q1" data-multi="true">
+        <div class="opt" data-val="厨房">厨房</div>
+        <div class="opt" data-val="卫生间">卫生间</div>
+        <div class="opt" data-val="客厅">客厅</div>
+        <div class="opt" data-val="卧室">卧室</div>
+        <div class="opt" data-val="阳台">阳台</div>
+        <div class="opt" data-val="全屋">全屋</div>
+        <div class="opt" data-val="其他">其他</div>
+      </div>
+      <input type="hidden" name="翻新区域" id="q1_input">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Q2 房屋面积 -->
+    <div class="q-group">
+      <div class="q-label">
+        <span class="q-num">2</span>
+        <span>您的房屋面积约多大？<span class="q-required">*</span></span>
+      </div>
+      <div class="options" data-name="q2" data-multi="false">
+        <div class="opt" data-val="60㎡以下">60㎡以下</div>
+        <div class="opt" data-val="60-90㎡">60-90㎡</div>
+        <div class="opt" data-val="90-120㎡">90-120㎡</div>
+        <div class="opt" data-val="120-150㎡">120-150㎡</div>
+        <div class="opt" data-val="150㎡以上">150㎡以上</div>
+      </div>
+      <input type="hidden" name="房屋面积" id="q2_input">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Q3 预算范围 -->
+    <div class="q-group">
+      <div class="q-label">
+        <span class="q-num">3</span>
+        <span>您的翻新预算大概是多少？<span class="q-required">*</span></span>
+      </div>
+      <div class="options" data-name="q3" data-multi="false">
+        <div class="opt" data-val="1万以内">1万以内</div>
+        <div class="opt" data-val="1-3万">1-3万</div>
+        <div class="opt" data-val="3-5万">3-5万</div>
+        <div class="opt" data-val="5-10万">5-10万</div>
+        <div class="opt" data-val="10万以上">10万以上</div>
+        <div class="opt" data-val="不确定">不确定，想先了解</div>
+      </div>
+      <input type="hidden" name="预算范围" id="q3_input">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Q4 翻新原因 -->
+    <div class="q-group">
+      <div class="q-label">
+        <span class="q-num">4</span>
+        <span>您翻新的主要原因是什么？</span>
+      </div>
+      <div class="q-hint">可多选</div>
+      <div class="options" data-name="q4" data-multi="true">
+        <div class="opt" data-val="老化破损">老化破损</div>
+        <div class="opt" data-val="漏水渗水">漏水渗水</div>
+        <div class="opt" data-val="风格过时">风格过时</div>
+        <div class="opt" data-val="功能不合理">功能不合理</div>
+        <div class="opt" data-val="出租改造">出租改造</div>
+        <div class="opt" data-val="二手房翻新">二手房翻新</div>
+        <div class="opt" data-val="其他">其他</div>
+      </div>
+      <input type="hidden" name="翻新原因" id="q4_input">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Q5 期望开工时间 -->
+    <div class="q-group">
+      <div class="q-label">
+        <span class="q-num">5</span>
+        <span>您希望什么时候开工？</span>
+      </div>
+      <div class="options" data-name="q5" data-multi="false">
+        <div class="opt" data-val="一周内">一周内</div>
+        <div class="opt" data-val="两周内">两周内</div>
+        <div class="opt" data-val="一个月内">一个月内</div>
+        <div class="opt" data-val="三个月内">三个月内</div>
+        <div class="opt" data-val="只是了解一下">只是了解一下</div>
+      </div>
+      <input type="hidden" name="开工时间" id="q5_input">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Q6 房屋现状 -->
+    <div class="q-group">
+      <div class="q-label">
+        <span class="q-num">6</span>
+        <span>房屋目前的状态是？</span>
+      </div>
+      <div class="options" data-name="q6" data-multi="false">
+        <div class="opt" data-val="自住中">自住中</div>
+        <div class="opt" data-val="空置状态">空置状态</div>
+        <div class="opt" data-val="刚收房">刚收房</div>
+        <div class="opt" data-val="出租房回收">出租房回收</div>
+      </div>
+      <input type="hidden" name="房屋现状" id="q6_input">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Q7 其他需求补充 -->
+    <div class="q-group">
+      <div class="q-label">
+        <span class="q-num">7</span>
+        <span>您还有其他需求或补充说明吗？</span>
+      </div>
+      <div class="text-input-wrap">
+        <textarea class="text-input" name="其他需求" placeholder="比如：想做开放式厨房、需要保留部分家具、有特殊材料偏好等"></textarea>
+      </div>
+    </div>
+
+    <div class="divider"></ div>
+
+    <!-- Q8 联系信息 -->
+    <div class="q-group">
+      <div class="q-label">
+        <span class="q-num">8</span>
+        <span>您的联系方式<span class="q-required">*</span></span>
+      </div>
+      <div class="text-input-wrap" style="margin-bottom:10px;">
+        <input type="text" class="text-input" name="姓名" placeholder="您的姓名" maxlength="20" required>
+      </div>
+      <div class="text-input-wrap" style="margin-bottom:10px;">
+        <input type="tel" class="text-input" name="联系电话" placeholder="手机号码" maxlength="11" required>
+      </div>
+      <div class="text-input-wrap">
+        <textarea class="text-input" name="详细地址" placeholder="详细地址（小区名+栋数+房号）" style="min-height:56px;"></textarea>
+      </div>
+    </div>
+
+  </div>
+</form>
+
+  <div class="submit-bar">
+    <div class="submit-hint"><b>*</b> 为必填项</div>
+    <button class="submit-btn" id="submitBtn">提交问卷</button>
+  </div>
+
+  <!-- 成功弹层 -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-icon">✓</div>
+    <div class="success-title">提交成功</div>
+    <div class="success-desc">我们会在 24 小时内与您联系<br>为您提供专属翻新方案</div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // 选项点击逻辑
+    const answers = {};
+    
+    document.querySelectorAll('.options').forEach(group => {
+      const name = group.dataset.name;
+      const multi = group.dataset.multi === 'true';
+      answers[name] = [];
+      
+      group.querySelectorAll('.opt').forEach(opt => {
+        opt.addEventListener('click', () => {
+          if (multi) {
+            opt.classList.toggle('selected');
+          } else {
+            group.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+          }
+          answers[name] = Array.from(group.querySelectorAll('.opt.selected')).map(o => o.dataset.val);
+          // 更新隐藏输入框
+          document.getElementById(name + '_input').value = answers[name].join(', ');
+        });
+      });
+    });
+
+    // Toast
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // 表单提交
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      if (!answers.q1 || answers.q1.length === 0) { showToast('请选择翻新区域'); return; }
+      if (!answers.q2 || answers.q2.length === 0) { showToast('请选择房屋面积'); return; }
+      if (!answers.q3 || answers.q3.length === 0) { showToast('请选择预算范围'); return; }
+      const name = document.querySelector('input[name="姓名"]').value.trim();
+      const phone = document.querySelector('input[name="联系电话"]').value.trim();
+      if (!name) { showToast('请填写您的姓名'); return; }
+      if (!phone || !/^1\d{10}$/.test(phone)) { showToast('请输入正确的手机号码'); return; }
+      
+      // 直接提交表单
+      document.getElementById('questionnaireForm').submit();
+    });
+  </script>
+
+</body>
+</html>
