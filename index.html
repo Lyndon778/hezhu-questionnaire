@@ -1,0 +1,212 @@
+'use strict';
+
+const https = require('https');
+
+// ========== 配置 ==========
+const TG_BOT_TOKEN = process.env.TG_BOT_TOKEN || '';
+const TG_CHAT_ID = process.env.TG_CHAT_ID || '6374235458';
+
+// ========== 工具函数 ==========
+
+// HTTPS POST（不依赖外部库，云函数原生支持）
+function httpsPost(url, body) {
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const payload = JSON.stringify(body);
+    const options = {
+      hostname: urlObj.hostname,
+      port: 443,
+      path: urlObj.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch { resolve(data); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('request timeout')); });
+    req.write(payload);
+    req.end();
+  });
+}
+
+// 发送 TG 消息（自动处理超长消息分片）
+async function sendTelegram(text) {
+  const MAX_LEN = 4000;
+  if (text.length <= MAX_LEN) {
+    return httpsPost(
+      `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,
+      { chat_id: TG_CHAT_ID, text, parse_mode: 'Markdown' }
+    );
+  }
+  // 分片发送
+  const lines = text.split('\n');
+  let chunk = '';
+  for (const line of lines) {
+    if ((chunk + '\n' + line).length > MAX_LEN && chunk) {
+      await httpsPost(
+        `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,
+        { chat_id: TG_CHAT_ID, text: chunk, parse_mode: 'Markdown' }
+      );
+      chunk = line;
+    } else {
+      chunk = chunk ? chunk + '\n' + line : line;
+    }
+  }
+  if (chunk) {
+    return httpsPost(
+      `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,
+      { chat_id: TG_CHAT_ID, text: chunk, parse_mode: 'Markdown' }
+    );
+  }
+}
+
+// 格式化问卷数据为 TG 消息
+function formatMessage(data, clientIP) {
+  const now = new Date();
+  const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  const arr = (v) => Array.isArray(v) ? v.join('、') : (v || '未填写');
+
+  let msg = `🔔 *禾铸·客户需求问卷*\n`;
+  msg += `⏰ ${timeStr}`;
+  if (clientIP) msg += ` | IP: ${clientIP}`;
+  msg += `\n━━━━━━━━━━━━━━\n\n`;
+  msg += `📍 *翻新区域*：${arr(data.翻新区域)}\n`;
+  msg += `📐 *房屋面积*：${arr(data.房屋面积)}\n`;
+  msg += `💰 *预算范围*：${arr(data.预算范围)}\n`;
+  msg += `🔧 *翻新原因*：${arr(data.翻新原因)}\n`;
+  msg += `📅 *开工时间*：${arr(data.开工时间)}\n`;
+  msg += `🏠 *房屋现状*：${arr(data.房屋现状)}\n`;
+  if (data.其他需求) msg += `💬 *其他需求*：${data.其他需求}\n`;
+  msg += `\n━━━━━━━━━━━━━━\n`;
+  msg += `👤 *姓名*：${data.姓名}\n`;
+  msg += `📱 *电话*：${data.联系电话}\n`;
+  if (data.详细地址) msg += `📍 *地址*：${data.详细地址}\n`;
+
+  return msg;
+}
+
+// ========== 云函数入口 ==========
+exports.handler = async (event) => {
+  // CORS 预检
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      },
+      body: ''
+    };
+  }
+
+  // 只接受 POST
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ ok: false, error: 'Method Not Allowed' })
+    };
+  }
+
+  // 校验 Token（防止恶意提交）
+  const authToken = process.env.AUTH_TOKEN || '';
+  if (authToken) {
+    const clientToken = (event.headers['authorization'] || '').replace('Bearer ', '');
+    if (clientToken !== authToken) {
+      return {
+        statusCode: 401,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ ok: false, error: 'Unauthorized' })
+      };
+    }
+  }
+
+  // 解析请求体
+  let data;
+  try {
+    data = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+  } catch {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ ok: false, error: 'Invalid JSON body' })
+    };
+  }
+
+  // 基本校验
+  if (!data.姓名 || !data.联系电话) {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ ok: false, error: '缺少必填字段：姓名、联系电话' })
+    };
+  }
+
+  // 获取客户端 IP
+  const reqCtx = event.requestContext || {};
+  const xff = (event.headers['x-forwarded-for'] || '').split(',')[0] || '';
+  const clientIP = reqCtx.ip
+    || (xff ? xff.trim() : '')
+    || event.headers['x-real-ip']
+    || '';
+
+  // 格式化并发送 TG
+  try {
+    const message = formatMessage(data, clientIP);
+    const result = await sendTelegram(message);
+
+    if (!result.ok) {
+      console.error('TG API error:', JSON.stringify(result));
+      return {
+        statusCode: 502,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ ok: false, error: '消息发送失败', detail: result })
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ ok: true, message: '提交成功，我们会尽快联系您' })
+    };
+  } catch (err) {
+    console.error('Send error:', err.message);
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ ok: false, error: '内部错误: ' + err.message })
+    };
+  }
+};
+
+// 本地测试入口
+if (require.main === module) {
+  exports.handler({
+    httpMethod: 'POST',
+    headers: {},
+    body: JSON.stringify({
+      翻新区域: ['厨房', '卫生间'],
+      房屋面积: ['90-120㎡'],
+      预算范围: ['3-5万'],
+      翻新原因: ['老化破损', '漏水渗水'],
+      开工时间: ['一个月内'],
+      房屋现状: ['自住中'],
+      其他需求: '想做开放式厨房',
+      姓名: '测试用户',
+      联系电话: '13800138000',
+      详细地址: '深圳市南山区xx小区1栋301'
+    })
+  }).then(r => console.log(JSON.stringify(r, null, 2)))
+    .catch(e => console.error(e));
+}
